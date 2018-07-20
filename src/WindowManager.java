@@ -11,7 +11,7 @@ import java.util.ArrayList;
  * as the program contains no data which is important enough
  */
 public class WindowManager {
-    private final static String PROGRAM_TITLE = "Contacts v0.1.0";
+    private final static String PROGRAM_TITLE = "Contacts v1.0.0";
 
     /**
      * creates the first window of the program, allowing the user to edit or view the contact list
@@ -33,10 +33,112 @@ public class WindowManager {
             }
         });
 
+        view.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                mainFrame.dispose();
+                viewWindow();
+            }
+        });
+
         buttonPanel.add(edit);
         buttonPanel.add(view);
         mainFrame.add(buttonPanel);
         mainFrame.setVisible(true);
+    }
+
+
+    /**
+     *
+     */
+    public static void viewWindow(){
+        JFrame mainFrame = commonFrame(PROGRAM_TITLE);
+        mainFrame.setLayout(new GridLayout(2, 1));
+        JButton back = new JButton("Back");                                             // sends back to the last frame
+        JButton view = new JButton("View");
+        JPanel info = new JPanel();
+        JPanel control = new JPanel();
+        ArrayList<Contact> contacts = ContactRuntime.getContactManager().getContacts();
+        JComponent output;                                                                  // will be used for JList or JLabel depending on if there are contacts or not, both JLabel and JList are children of JComponent
+        int [] nameSelectedIndex = {0};                                                     // to access this variable in a different class, it must be in an array first
+
+        // creating the right type of output for the amount of contacts we have
+        if(contacts.size() == 0){
+            output = new JLabel("No contacts");                                          // if there are no contacts, than that'll mean that we simple tell the user that
+            info.add(output);
+        }else{
+            // creating an array of strings for JList to use
+            String contactNames[] = new String[contacts.size()];                            // if there is at least one contact, than we create a JList which the user can use to scroll through there contacts
+
+            // filling that array with contact names
+            for(int i = 0; i < contacts.size(); i++) contactNames[i] = contacts.get(i).getName();
+
+            // create the JList and JScrollPane for the list
+            output = new JList<String>(contactNames);
+            JScrollPane scrollPane = new JScrollPane(output);
+            scrollPane.setPreferredSize(new Dimension(200, 90));
+            ((JList) output).setSelectionMode(ListSelectionModel.SINGLE_SELECTION);         // makes it so we can only select one name at a time
+            ((JList) output).addListSelectionListener(new ListSelectionListener() {
+                @Override
+                public void valueChanged(ListSelectionEvent listSelectionEvent) {
+                    int index = ((JList) output).getSelectedIndex();                        // get the what we have selected
+                    nameSelectedIndex[0] = index;                                                // set the string so we know what name is selected, that way we can look it up later
+                }
+            });
+
+            info.add(scrollPane);
+        }
+
+        // adding functionality to the buttons
+        back.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                mainFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                mainFrame.dispose();
+                entryWindow();
+            }
+        });
+
+        view.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                mainFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                mainFrame.dispose();
+                viewContact(nameSelectedIndex[0]);
+
+            }
+        });
+
+        control.add(back);
+        control.add(view);
+        mainFrame.add(info);
+        mainFrame.add(control);
+        mainFrame.setVisible(true);
+    }
+
+    public static void viewContact(int i){
+        JFrame mainFrame = commonFrame(PROGRAM_TITLE);
+        JButton back = new JButton("Back");
+        JPanel viewPanel = new JPanel();
+        JPanel controlPanel = new JPanel();
+        Contact c = ContactRuntime.getContactManager().getContacts().get(i);
+        JLabel out = new JLabel("<html><body><h4>Name: " + c.getName() +"</h4><br/><h4>Phone Number: " + c.getPhoneNumber() +"</h4><br/><h4>Email: " + c.getEmail() + "</h4><br/><h4>Extra: " + c.getNotes() + "</h4><br/></body></html>");
+
+        back.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                viewWindow();
+            }
+        });
+
+        viewPanel.add(out);
+        controlPanel.add(back);
+
+        mainFrame.add(out);
+        mainFrame.add(back);
+        mainFrame.setVisible(true);
+
     }
 
     /**
@@ -104,9 +206,16 @@ public class WindowManager {
         edit.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
-                mainFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-                mainFrame.dispose();
-                editContactWindow(nameSelectedIndex[0]);
+                try {
+                    editContactWindow(nameSelectedIndex[0]);
+                    mainFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                    mainFrame.dispose();
+                }catch (IndexOutOfBoundsException iobe){
+                    MessageWindow err = new MessageWindow("Error: No contacts", "Error: cannot edit when there are no contacts in list", 400, 200);
+                    err.setUp();
+                    err.display();
+
+                }
             }
         });
 
@@ -171,6 +280,7 @@ public class WindowManager {
                 contacts.add(new Contact(name, phoneNumber, email, extra));
                 ContactRuntime.setContactManager(new ContactManager(contacts));
                 editWindow();
+                ContactRuntime.save();
             }
         });
 
@@ -264,7 +374,3 @@ public class WindowManager {
         return frame;
     }
 }
-
-/**
- * TODO: ADD VIEW WINDOW
- */

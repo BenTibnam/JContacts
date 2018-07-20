@@ -1,7 +1,8 @@
 import java.util.Scanner;
 import java.util.ArrayList;
+import java.io.*;
 
-public class ContactManager {
+public class ContactManager implements Serializable{
     private int contactsAdded;
     private ArrayList<Contact> contacts;
 
@@ -78,6 +79,9 @@ public class ContactManager {
         }
     }
 
+
     public int getContactsAdded(){return this.contactsAdded;}
     public ArrayList<Contact> getContacts(){return this.contacts;}
+
+
 }
