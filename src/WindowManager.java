@@ -11,7 +11,7 @@ import java.util.ArrayList;
  * as the program contains no data which is important enough
  */
 public class WindowManager {
-    private final static String PROGRAM_TITLE = "Contacts v0.0.1";
+    private final static String PROGRAM_TITLE = "Contacts v0.1.0";
 
     /**
      * creates the first window of the program, allowing the user to edit or view the contact list
@@ -194,7 +194,58 @@ public class WindowManager {
      * @param i the index of the contact that we are editing in the ContactManager
      */
     public static void editContactWindow(int i){
+        ArrayList<Contact> contacts = ContactRuntime.getContactManager().getContacts();
+        Contact target = contacts.get(i);
+        JFrame mainFrame = commonFrame(PROGRAM_TITLE);
+        mainFrame.setLayout(new GridLayout(2,1));
+        JTextField nameField = new JTextField(target.getName(),15);
+        JTextField phoneNumberField = new JTextField(target.getPhoneNumber(),10);
+        JTextField emailField = new JTextField(target.getEmail(),10);
+        JTextArea extraArea = new JTextArea(target.getNotes(),10, 25);
+        JButton back = new JButton("Back");
+        JButton save = new JButton("Save");
+        JPanel fieldPanel = new JPanel();
+        JPanel controlPanel = new JPanel();
+        JScrollPane scrollPane = new JScrollPane(extraArea);
+        extraArea.setLineWrap(true);
+        extraArea.setWrapStyleWord(true);
 
+        back.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                mainFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                mainFrame.dispose();
+                editWindow();
+            }
+        });
+
+        save.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                mainFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                mainFrame.dispose();
+
+
+                // get text information
+                String name = nameField.getText(), phoneNumber = phoneNumberField.getText(), email = emailField.getText(), extra = extraArea.getText();
+                contacts.set(i, new Contact(name, phoneNumber, email, extra));
+                ContactRuntime.setContactManager(new ContactManager(contacts));
+                editWindow();
+            }
+        });
+
+        fieldPanel.add(nameField);
+        fieldPanel.add(phoneNumberField);
+        fieldPanel.add(emailField);
+        fieldPanel.add(scrollPane);
+
+        controlPanel.add(back);
+        controlPanel.add(save);
+
+        mainFrame.add(fieldPanel);
+        mainFrame.add(controlPanel);
+
+        mainFrame.setVisible(true);
     }
 
 
@@ -215,5 +266,5 @@ public class WindowManager {
 }
 
 /**
- * TODO: create the add window and the edit window and test out functionality
+ * TODO: ADD VIEW WINDOW
  */
