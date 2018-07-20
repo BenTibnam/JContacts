@@ -11,7 +11,7 @@ import java.util.ArrayList;
  * as the program contains no data which is important enough
  */
 public class WindowManager {
-    private final static String PROGRAM_TITLE = "Contacts v1.0.0";
+    private final static String PROGRAM_TITLE = "Contacts v1.0.1";
 
     /**
      * creates the first window of the program, allowing the user to edit or view the contact list
@@ -227,6 +227,7 @@ public class WindowManager {
                 mainFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
                 mainFrame.dispose();
                 editWindow();
+                ContactRuntime.save();
             }
         });
 
@@ -341,6 +342,7 @@ public class WindowManager {
                 contacts.set(i, new Contact(name, phoneNumber, email, extra));
                 ContactRuntime.setContactManager(new ContactManager(contacts));
                 editWindow();
+                ContactRuntime.save();
             }
         });
 
