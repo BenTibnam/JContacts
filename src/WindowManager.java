@@ -11,7 +11,7 @@ import java.util.ArrayList;
  * as the program contains no data which is important enough
  */
 public class WindowManager {
-    private final static String PROGRAM_TITLE = "Contacts v1.0.1";
+    private final static String PROGRAM_TITLE = "Contacts v1.0.2";
 
     /**
      * creates the first window of the program, allowing the user to edit or view the contact list
@@ -123,16 +123,32 @@ public class WindowManager {
         JPanel viewPanel = new JPanel();
         JPanel controlPanel = new JPanel();
         Contact c = ContactRuntime.getContactManager().getContacts().get(i);
-        JLabel out = new JLabel("<html><body><h4>Name: " + c.getName() +"</h4><br/><h4>Phone Number: " + c.getPhoneNumber() +"</h4><br/><h4>Email: " + c.getEmail() + "</h4><br/><h4>Extra: " + c.getNotes() + "</h4><br/></body></html>");
+        JLabel out = new JLabel();
+
+        // setting all the basic text
+        out.setText("<html><body>Name: " + c.getName() + "<br/><br/>Phone Number: " + c.getPhoneNumber() + "<br/<br/>Email: " + c.getEmail() + "<br/><br/>Notes: ");
+
+        // generating the notes text
+        for(int j = 0; j < c.getNotes().length(); j++){
+            if(c.getNotes().charAt(j) == '\n') out.setText(out.getText() + "<br/>");
+            else out.setText(out.getText() + c.getNotes().charAt(j));
+        }
+
+        // closing out the html
+        out.setText(out.getText() + "</body></html>");
+
+        JScrollPane scrollPane = new JScrollPane(out); // adding scroll pane in case notes are long
 
         back.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
+                mainFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                mainFrame.dispose();
                 viewWindow();
             }
         });
 
-        viewPanel.add(out);
+        viewPanel.add(scrollPane);
         controlPanel.add(back);
 
         mainFrame.add(out);
@@ -376,3 +392,5 @@ public class WindowManager {
         return frame;
     }
 }
+
+/*TODO: new features ContactGroup and different save files*/
