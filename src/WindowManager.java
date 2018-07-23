@@ -50,45 +50,16 @@ public class WindowManager {
 
 
     /**
-     *
+     * creates a window containing a JList if there are contacts and a JLabel telling the user there are no contacts if none exist, used to select contact to view
      */
     public static void viewWindow(){
         JFrame mainFrame = commonFrame(PROGRAM_TITLE);
         mainFrame.setLayout(new GridLayout(2, 1));
         JButton back = new JButton("Back");                                             // sends back to the last frame
         JButton view = new JButton("View");
-        JPanel info = new JPanel();
+        JPanelIndexKeeper info = createListPanel();
         JPanel control = new JPanel();
-        ArrayList<Contact> contacts = ContactRuntime.getContactManager().getContacts();
-        JComponent output;                                                                  // will be used for JList or JLabel depending on if there are contacts or not, both JLabel and JList are children of JComponent
-        int [] nameSelectedIndex = {0};                                                     // to access this variable in a different class, it must be in an array first
 
-        // creating the right type of output for the amount of contacts we have
-        if(contacts.size() == 0){
-            output = new JLabel("No contacts");                                          // if there are no contacts, than that'll mean that we simple tell the user that
-            info.add(output);
-        }else{
-            // creating an array of strings for JList to use
-            String contactNames[] = new String[contacts.size()];                            // if there is at least one contact, than we create a JList which the user can use to scroll through there contacts
-
-            // filling that array with contact names
-            for(int i = 0; i < contacts.size(); i++) contactNames[i] = contacts.get(i).getName();
-
-            // create the JList and JScrollPane for the list
-            output = new JList<String>(contactNames);
-            JScrollPane scrollPane = new JScrollPane(output);
-            scrollPane.setPreferredSize(new Dimension(200, 90));
-            ((JList) output).setSelectionMode(ListSelectionModel.SINGLE_SELECTION);         // makes it so we can only select one name at a time
-            ((JList) output).addListSelectionListener(new ListSelectionListener() {
-                @Override
-                public void valueChanged(ListSelectionEvent listSelectionEvent) {
-                    int index = ((JList) output).getSelectedIndex();                        // get the what we have selected
-                    nameSelectedIndex[0] = index;                                                // set the string so we know what name is selected, that way we can look it up later
-                }
-            });
-
-            info.add(scrollPane);
-        }
 
         // adding functionality to the buttons
         back.addActionListener(new ActionListener() {
@@ -105,7 +76,7 @@ public class WindowManager {
             public void actionPerformed(ActionEvent actionEvent) {
                 mainFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
                 mainFrame.dispose();
-                viewContact(nameSelectedIndex[0]);
+                viewContact(info.getIndex());
 
             }
         });
@@ -117,6 +88,10 @@ public class WindowManager {
         mainFrame.setVisible(true);
     }
 
+    /**
+     * opens window with contact information printed out
+     * @param i the index of the contact we want to view
+     */
     public static void viewContact(int i){
         JFrame mainFrame = commonFrame(PROGRAM_TITLE);
         JButton back = new JButton("Back");
@@ -167,38 +142,12 @@ public class WindowManager {
         JButton add = new JButton("Add");
         JButton remove = new JButton("Remove");
         JButton edit = new JButton("Edit");
-        JPanel info = new JPanel();
+        JPanelIndexKeeper info = createListPanel();
         JPanel control = new JPanel();
         ArrayList<Contact> contacts = ContactRuntime.getContactManager().getContacts();
         JComponent output;                                                                  // will be used for JList or JLabel depending on if there are contacts or not, both JLabel and JList are children of JComponent
-        int [] nameSelectedIndex = {0};                                                     // to access this variable in a different class, it must be in an array first
+                                                                                            // to access this variable in a different class, it must be in an array first
 
-        // creating the right type of output for the amount of contacts we have
-        if(contacts.size() == 0){
-            output = new JLabel("No contacts");                                          // if there are no contacts, than that'll mean that we simple tell the user that
-            info.add(output);
-        }else{
-            // creating an array of strings for JList to use
-            String contactNames[] = new String[contacts.size()];                            // if there is at least one contact, than we create a JList which the user can use to scroll through there contacts
-
-            // filling that array with contact names
-            for(int i = 0; i < contacts.size(); i++) contactNames[i] = contacts.get(i).getName();
-
-            // create the JList and JScrollPane for the list
-            output = new JList<String>(contactNames);
-            JScrollPane scrollPane = new JScrollPane(output);
-            scrollPane.setPreferredSize(new Dimension(200, 90));
-            ((JList) output).setSelectionMode(ListSelectionModel.SINGLE_SELECTION);         // makes it so we can only select one name at a time
-            ((JList) output).addListSelectionListener(new ListSelectionListener() {
-                @Override
-                public void valueChanged(ListSelectionEvent listSelectionEvent) {
-                    int index = ((JList) output).getSelectedIndex();                        // get the what we have selected
-                    nameSelectedIndex[0] = index;                                                // set the string so we know what name is selected, that way we can look it up later
-                }
-            });
-
-            info.add(scrollPane);
-        }
 
         // adding functionality to the buttons
         back.addActionListener(new ActionListener() {
@@ -223,7 +172,7 @@ public class WindowManager {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
                 try {
-                    editContactWindow(nameSelectedIndex[0]);
+                    editContactWindow(info.getIndex());
                     mainFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
                     mainFrame.dispose();
                 }catch (IndexOutOfBoundsException iobe){
@@ -238,7 +187,7 @@ public class WindowManager {
         remove.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
-                contacts.remove(nameSelectedIndex[0]);
+                contacts.remove(info.getIndex());
                 ContactRuntime.setContactManager(new ContactManager(contacts));
                 mainFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
                 mainFrame.dispose();
@@ -390,6 +339,47 @@ public class WindowManager {
         frame.setLayout(new FlowLayout());
 
         return frame;
+    }
+
+    /**
+     * creates a JPanel which contains a JList of the contacts
+     * @return the completed JPanelIndex keeper
+     */
+    private static JPanelIndexKeeper createListPanel(){
+        JPanelIndexKeeper out = new JPanelIndexKeeper(0);
+        ArrayList<Contact> contacts = ContactRuntime.getContactManager().getContacts();
+        JComponent output;                                                                  // will be used for JList or JLabel depending on if there are contacts or not, both JLabel and JList are children of JComponent
+        int [] nameSelectedIndex = {0};
+
+        // creating the right type of output for the amount of contacts we have
+        if(contacts.size() == 0){
+            output = new JLabel("No contacts");                                          // if there are no contacts, than that'll mean that we simple tell the user that
+            out.add(output);
+        }else {
+            // creating an array of strings for JList to use
+            String contactNames[] = new String[contacts.size()];                            // if there is at least one contact, than we create a JList which the user can use to scroll through there contacts
+
+            // filling that array with contact names
+            for (int i = 0; i < contacts.size(); i++) contactNames[i] = contacts.get(i).getName();
+
+            // create the JList and JScrollPane for the list
+            output = new JList<String>(contactNames);
+            JScrollPane scrollPane = new JScrollPane(output);
+            scrollPane.setPreferredSize(new Dimension(200, 90));
+            ((JList) output).setSelectionMode(ListSelectionModel.SINGLE_SELECTION);         // makes it so we can only select one name at a time
+            ((JList) output).addListSelectionListener(new ListSelectionListener() {
+                @Override
+                public void valueChanged(ListSelectionEvent listSelectionEvent) {
+                    int index = ((JList) output).getSelectedIndex();                        // get the what we have selected
+                    out.setIndex(nameSelectedIndex[0]);
+                }
+
+            });
+
+            out.add(scrollPane);
+        }
+
+        return out;
     }
 }
 
