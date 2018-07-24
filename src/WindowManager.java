@@ -11,7 +11,7 @@ import java.util.ArrayList;
  * as the program contains no data which is important enough
  */
 public class WindowManager {
-    private final static String PROGRAM_TITLE = "Contacts v2.0.0";
+    private final static String PROGRAM_TITLE = "Contacts v2.0.1";
 
     /**
      * creates the first window of the program, allowing the user to edit or view the contact list
@@ -308,6 +308,8 @@ public class WindowManager {
             }
         });
 
+
+
         titlePane.add(groupLabel);
 
         actionPane.setLayout(new GridLayout(1, 5));
@@ -559,7 +561,8 @@ public class WindowManager {
                 @Override
                 public void valueChanged(ListSelectionEvent listSelectionEvent) {
                     int index = ((JList) output).getSelectedIndex();                        // get the what we have selected
-                    out.setIndex(nameSelectedIndex[0]);
+                    out.setIndex(index);
+
                 }
 
             });
