@@ -3,6 +3,8 @@ import java.util.ArrayList;
 
 public class ContactGroupManager implements Serializable {
     private ArrayList<ContactGroup> groups;
+    private boolean showOnStart;
+    private int indexOfStart;
 
     /**
      * default constructor for ContactGroupManager
@@ -45,6 +47,9 @@ public class ContactGroupManager implements Serializable {
     }
 
     public ArrayList<ContactGroup> getGroups(){return this.groups;}
+    public boolean isShowOnStart(){return this.showOnStart;}
+    public int getIndexOfStart(){return this.indexOfStart;}
     public void setGroups(ArrayList<ContactGroup> cg){this.groups = cg;}
-
+    public void setShowOnStart(boolean b){this.showOnStart = b;}
+    public void setIndexOfStart(int i){this.indexOfStart = i;}
 }

@@ -17,6 +17,12 @@ public class WindowManager {
      * creates the first window of the program, allowing the user to edit or view the contact list
      */
     public static void entryWindow(){
+        // preloading group if selected
+        if(ContactRuntime.getContactGroupManager().isShowOnStart()){
+            groupWindow(ContactRuntime.getContactGroupManager().getIndexOfStart());
+            return;
+        }
+
         // creating all the widgets
         JFrame mainFrame = commonFrame(PROGRAM_TITLE);
         mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -25,9 +31,11 @@ public class WindowManager {
         JLabel listLabel = new JLabel("Groups: ");
         JLabel alwaysLoadLabel = new JLabel("Always Load Group:    ");
         JComboBox<String> groupList = new JComboBox<String>();
-        JCheckBox alwaysLoad = new JCheckBox();
+        JCheckBox[] alwaysLoad = {new JCheckBox()};
         JButton open = new JButton("Open");
         JButton save = new JButton("Save");
+        JButton newGroup = new JButton("New Group");
+        JButton editGroup = new JButton("Edit Group");
         ArrayList<ContactGroup> groups = ContactRuntime.getContactGroupManager().getGroups();
         int index[] = {0};
 
@@ -35,6 +43,23 @@ public class WindowManager {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
                 index[0] = groupList.getSelectedIndex();
+            }
+        });
+
+        alwaysLoad[0].addItemListener(new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent itemEvent) {
+                alwaysLoad[0] = (JCheckBox)itemEvent.getItem();
+                if(alwaysLoad[0].isSelected()){
+                    ContactRuntime.getContactGroupManager().setShowOnStart(true);
+                    ContactRuntime.getContactGroupManager().setIndexOfStart(index[0]);
+                }else{
+                    ContactRuntime.getContactGroupManager().setShowOnStart(false);
+                }
+
+                System.out.println(ContactRuntime.getContactGroupManager().isShowOnStart());
+
+                ContactRuntime.save();
             }
         });
 
@@ -51,7 +76,26 @@ public class WindowManager {
         save.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
+                ContactRuntime.save();
+            }
+        });
 
+        newGroup.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                mainFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                mainFrame.dispose();
+                createGroupWindow();
+            }
+        });
+
+        editGroup.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                mainFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                mainFrame.dispose();
+                ContactRuntime.setIndex(index[0]);
+                editGroupWindow(index[0]);
             }
         });
 
@@ -64,15 +108,138 @@ public class WindowManager {
         selectionPane.add(listLabel);
         selectionPane.add(groupList);
         selectionPane.add(alwaysLoadLabel);
-        selectionPane.add(alwaysLoad);
+        selectionPane.add(alwaysLoad[0]);
 
         // filling the the action pane
         actionPane.add(open);
         actionPane.add(save);
+        actionPane.add(newGroup);
+        actionPane.add(editGroup);
 
         mainFrame.add(selectionPane);
         mainFrame.add(actionPane);
         mainFrame.setVisible(true);
+    }
+
+    /**
+     * creates a new group
+     */
+    public static void createGroupWindow(){
+        JFrame mainFrame = commonFrame(PROGRAM_TITLE);
+        JPanel fieldPane = new JPanel();
+        JPanel actionPane = new JPanel();
+        JTextField groupName = new JTextField("Enter group name", 10);
+        JButton create = new JButton("Create");
+        JButton cancel = new JButton("Cancel");
+
+        create.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                ContactRuntime.getContactGroupManager().addContactGroup(new ContactGroup(groupName.getText()));
+                ContactRuntime.save();
+                mainFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                mainFrame.dispose();
+                entryWindow();
+            }
+        });
+
+        fieldPane.add(groupName);
+        actionPane.add(cancel);
+        actionPane.add(create);
+
+        mainFrame.add(fieldPane);
+        mainFrame.add(actionPane);
+        mainFrame.setVisible(true);
+    }
+
+    public static void editGroupWindow(int i){
+        JFrame mainFrame = commonFrame(PROGRAM_TITLE);
+        JPanel fieldPane = new JPanel();
+        JPanel actionPane = new JPanel();
+        ContactGroup cg = ContactRuntime.getContactGroupManager().getGroups().get(i);
+        JTextField groupName = new JTextField(cg.getName(), 10);
+        JButton cancel = new JButton("Cancel");
+        JButton remove = new JButton("Remove");
+        JButton save = new JButton("Save");
+
+        cancel.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                mainFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                mainFrame.dispose();
+                entryWindow();
+            }
+        });
+
+        remove.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                JFrame confirmationFrame = commonFrame("Delete Group");
+                JPanel warningPane = new JPanel();
+                JPanel actionPane = new JPanel();
+                JLabel warning = new JLabel("<html><body><h4> Warning you are about to delete a group. <br/> type in group name to confirm </h4></body></html>");
+                JTextField nameField = new JTextField(10);
+                JButton cancel = new JButton("Cancel");
+                JButton confirm = new JButton("Confirm");
+
+                cancel.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent actionEvent) {
+                        confirmationFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                        confirmationFrame.dispose();
+                    }
+                });
+
+                confirm.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent actionEvent) {
+                        if(nameField.getText().equals(cg.getName())){
+                            ContactRuntime.getContactGroupManager().removeContactGroup(i);
+                            confirmationFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                            confirmationFrame.dispose();
+                            mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                            mainFrame.dispose();
+                            entryWindow();
+                        }else{
+                            warning.setText("<html><body><h4> Name doesn't match group, try again</h4></body></html>");
+                            nameField.setText("");
+                        }
+                    }
+                });
+
+                warningPane.add(warning);
+                actionPane.add(nameField);
+                actionPane.add(cancel);
+                actionPane.add(confirm);
+
+                confirmationFrame.add(warningPane);
+                confirmationFrame.add(actionPane);
+                confirmationFrame.setVisible(true);
+            }
+        });
+
+        save.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                mainFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                mainFrame.dispose();
+                ContactRuntime.save();
+                entryWindow();
+            }
+        });
+
+        fieldPane.add(groupName);
+
+        actionPane.add(cancel);
+        actionPane.add(remove);
+        actionPane.add(save);
+
+        mainFrame.add(fieldPane);
+        mainFrame.add(actionPane);
+
+        mainFrame.setVisible(true);
+
+
     }
 
     public static void groupWindow(int i){
@@ -141,7 +308,6 @@ public class WindowManager {
             }
         });
 
-
         titlePane.add(groupLabel);
 
         actionPane.setLayout(new GridLayout(1, 5));
@@ -151,54 +317,38 @@ public class WindowManager {
         actionPane.add(edit);
         actionPane.add(add);
 
+
+
         mainFrame.add(titlePane);
         mainFrame.add(info);
         mainFrame.add(actionPane);
+
+        if(ContactRuntime.getContactGroupManager().isShowOnStart()){
+            JLabel message = new JLabel("Uncheck to remove show on start: ");
+            JPanel checkboxPane = new JPanel();
+            JCheckBox[] showOnStart = {new JCheckBox()};
+            showOnStart[0].setSelected(ContactRuntime.getContactGroupManager().isShowOnStart());
+
+            showOnStart[0].addItemListener(new ItemListener() {
+                @Override
+                public void itemStateChanged(ItemEvent itemEvent) {
+                    showOnStart[0] = (JCheckBox)itemEvent.getItem();
+                    ContactRuntime.getContactGroupManager().setShowOnStart(showOnStart[0].isSelected());
+                }
+            });
+
+            checkboxPane.add(message);
+            checkboxPane.add(showOnStart[0]);
+            mainFrame.add(checkboxPane);
+
+        }
+
         mainFrame.setVisible(true);
 
 
 
     }
 
-
-    /**
-     * creates a window containing a JList if there are contacts and a JLabel telling the user there are no contacts if none exist, used to select contact to view
-     */
-    public static void viewWindow(){
-        JFrame mainFrame = commonFrame(PROGRAM_TITLE);
-        mainFrame.setLayout(new GridLayout(2, 1));
-        JButton back = new JButton("Back");                                             // sends back to the last frame
-        JButton view = new JButton("View");
-        JPanelIndexKeeper info = createListPanel();
-        JPanel control = new JPanel();
-
-
-        // adding functionality to the buttons
-        back.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent actionEvent) {
-                mainFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-                mainFrame.dispose();
-                entryWindow();
-            }
-        });
-
-        view.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent actionEvent) {
-                mainFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-                mainFrame.dispose();
-                viewContact(info.getIndex());
-
-            }
-        });
-
-        control.add(back);
-        control.add(view);
-        mainFrame.add(info);
-        mainFrame.add(control);
-        mainFrame.setVisible(true);
-    }
 
     /**
      * opens window with contact information printed out
@@ -369,6 +519,7 @@ public class WindowManager {
      * @return the frame after it has been created
      */
     private static JFrame commonFrame(String n){
+        ContactRuntime.save();
         JFrame frame = new JFrame(n);
         frame.setSize(400, 400);
         frame.setLocationRelativeTo(null);
@@ -419,7 +570,3 @@ public class WindowManager {
         return out;
     }
 }
-
-/*TODO: new features ContactGroup and different save files*/
-
- // TODO: remove when finished

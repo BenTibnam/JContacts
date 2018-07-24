@@ -30,6 +30,7 @@ public class ContactRuntime{
         try{
             ObjectInputStream open = new ObjectInputStream(new FileInputStream("group-contacts.ser"));
             cgm = (ContactGroupManager)open.readObject();
+
         }catch(IOException ioe){
             // this is called if there is no contacts.ser, so we save a new one
             cgm.addContactGroup(new ContactGroup("Default"));
