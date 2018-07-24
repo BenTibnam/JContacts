@@ -11,57 +11,130 @@ import java.util.ArrayList;
  * as the program contains no data which is important enough
  */
 public class WindowManager {
-    private final static String PROGRAM_TITLE = "Contacts v1.0.2";
+    private final static String PROGRAM_TITLE = "Contacts v2.0.0";
 
     /**
      * creates the first window of the program, allowing the user to edit or view the contact list
      */
     public static void entryWindow(){
+        // creating all the widgets
         JFrame mainFrame = commonFrame(PROGRAM_TITLE);
         mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        JPanel buttonPanel = new JPanel();
-        JButton edit = new JButton("Edit");
-        JButton view = new JButton("View");
+        JPanel selectionPane = new JPanel();
+        JPanel actionPane = new JPanel();
+        JLabel listLabel = new JLabel("Groups: ");
+        JLabel alwaysLoadLabel = new JLabel("Always Load Group:    ");
+        JComboBox<String> groupList = new JComboBox<String>();
+        JCheckBox alwaysLoad = new JCheckBox();
+        JButton open = new JButton("Open");
+        JButton save = new JButton("Save");
+        JButton newGroup = new JButton("New Group");
+        ArrayList<ContactGroup> groups = ContactRuntime.getContactGroupManager().getGroups();
+        int index[] = {0};
 
-        // setting it so the buttons create the right window
-        edit.addActionListener(new ActionListener() {
+        groupList.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                index[0] = groupList.getSelectedIndex();
+            }
+        });
+
+        open.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent){
+                mainFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                mainFrame.dispose();
+                ContactRuntime.setIndex(index[0]);
+                groupWindow(index[0]);
+            }
+        });
+
+        save.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                ContactRuntime.save();
+            }
+        });
+
+        newGroup.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
                 mainFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
                 mainFrame.dispose();
-                editWindow();
+                createGroupWindow();
             }
         });
 
-        view.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent actionEvent) {
-                mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                mainFrame.dispose();
-                viewWindow();
-            }
-        });
+        for(ContactGroup cg : groups){
+            groupList.addItem(cg.getName());
+        }
 
-        buttonPanel.add(edit);
-        buttonPanel.add(view);
-        mainFrame.add(buttonPanel);
+        // filling the selection pane
+        selectionPane.setLayout(new GridLayout(2,1));
+        selectionPane.add(listLabel);
+        selectionPane.add(groupList);
+        selectionPane.add(alwaysLoadLabel);
+        selectionPane.add(alwaysLoad);
+
+        // filling the the action pane
+        actionPane.add(open);
+        actionPane.add(save);
+        actionPane.add(newGroup);
+
+        mainFrame.add(selectionPane);
+        mainFrame.add(actionPane);
         mainFrame.setVisible(true);
     }
 
-
     /**
-     * creates a window containing a JList if there are contacts and a JLabel telling the user there are no contacts if none exist, used to select contact to view
+     * creates a new group
      */
-    public static void viewWindow(){
+    public static void createGroupWindow(){
         JFrame mainFrame = commonFrame(PROGRAM_TITLE);
-        mainFrame.setLayout(new GridLayout(2, 1));
-        JButton back = new JButton("Back");                                             // sends back to the last frame
-        JButton view = new JButton("View");
+        JPanel fieldPane = new JPanel();
+        JPanel actionPane = new JPanel();
+        JTextField groupName = new JTextField("Enter group name", 10);
+        JButton create = new JButton("Create");
+        JButton cancel = new JButton("Cancel");
+
+        create.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                ContactRuntime.getContactGroupManager().addContactGroup(new ContactGroup(groupName.getText()));
+                ContactRuntime.save();
+                mainFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                mainFrame.dispose();
+                entryWindow();
+            }
+        });
+
+        fieldPane.add(groupName);
+        actionPane.add(cancel);
+        actionPane.add(create);
+
+        mainFrame.add(fieldPane);
+        mainFrame.add(actionPane);
+        mainFrame.setVisible(true);
+    }
+
+    public static void groupWindow(int i){
+        // creating widgets
+        JFrame mainFrame = commonFrame(PROGRAM_TITLE);
+        mainFrame.setSize(500, 400);
+        mainFrame.setLocationRelativeTo(null);
+        mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        JPanel titlePane = new JPanel();
         JPanelIndexKeeper info = createListPanel();
-        JPanel control = new JPanel();
+        JPanel actionPane = new JPanel();
+        JLabel groupLabel = new JLabel("Group: " + ContactRuntime.getContactGroupManager().getGroups().get(i).getName());
+        JButton back = new JButton("Back");
+        JButton remove = new JButton("Remove");
+        JButton view = new JButton("View");
+        JButton edit = new JButton("Edit");
+        JButton add = new JButton("Add");
+        ArrayList<Contact> contacts = ContactRuntime.getContactGroupManager().getGroups().get(i).getManager().getContacts();
 
 
-        // adding functionality to the buttons
         back.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
@@ -71,22 +144,64 @@ public class WindowManager {
             }
         });
 
+        remove.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                contacts.remove(info.getIndex());
+                ContactRuntime.getContactGroupManager().getGroups().get(ContactRuntime.getIndex()).setManager(new ContactManager(contacts));
+                mainFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                mainFrame.dispose();
+                groupWindow(ContactRuntime.getIndex());
+                ContactRuntime.save();
+            }
+        });
+
         view.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
                 mainFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
                 mainFrame.dispose();
                 viewContact(info.getIndex());
-
             }
         });
 
-        control.add(back);
-        control.add(view);
+        edit.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                mainFrame.dispose();
+                editContactWindow(info.getIndex());
+            }
+        });
+
+        add.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                mainFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                mainFrame.dispose();
+                addWindow();
+            }
+        });
+
+
+        titlePane.add(groupLabel);
+
+        actionPane.setLayout(new GridLayout(1, 5));
+        actionPane.add(back);
+        actionPane.add(remove);
+        actionPane.add(view);
+        actionPane.add(edit);
+        actionPane.add(add);
+
+        mainFrame.add(titlePane);
         mainFrame.add(info);
-        mainFrame.add(control);
+        mainFrame.add(actionPane);
         mainFrame.setVisible(true);
+
+
+
     }
+
 
     /**
      * opens window with contact information printed out
@@ -97,7 +212,7 @@ public class WindowManager {
         JButton back = new JButton("Back");
         JPanel viewPanel = new JPanel();
         JPanel controlPanel = new JPanel();
-        Contact c = ContactRuntime.getContactManager().getContacts().get(i);
+        Contact c = ContactRuntime.getContactGroupManager().getGroups().get(ContactRuntime.getIndex()).getManager().getContacts().get(i);
         JLabel out = new JLabel();
 
         // setting all the basic text
@@ -119,7 +234,7 @@ public class WindowManager {
             public void actionPerformed(ActionEvent actionEvent) {
                 mainFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
                 mainFrame.dispose();
-                viewWindow();
+                groupWindow(ContactRuntime.getIndex());
             }
         });
 
@@ -128,81 +243,6 @@ public class WindowManager {
 
         mainFrame.add(out);
         mainFrame.add(back);
-        mainFrame.setVisible(true);
-
-    }
-
-    /**
-     * creates the edit window, allowing user to add or remove contacts
-     */
-    public static void editWindow(){
-        JFrame mainFrame = commonFrame(PROGRAM_TITLE);
-        mainFrame.setLayout(new GridLayout(2, 1));
-        JButton back = new JButton("Back");                                             // sends back to the last frame
-        JButton add = new JButton("Add");
-        JButton remove = new JButton("Remove");
-        JButton edit = new JButton("Edit");
-        JPanelIndexKeeper info = createListPanel();
-        JPanel control = new JPanel();
-        ArrayList<Contact> contacts = ContactRuntime.getContactManager().getContacts();
-        JComponent output;                                                                  // will be used for JList or JLabel depending on if there are contacts or not, both JLabel and JList are children of JComponent
-                                                                                            // to access this variable in a different class, it must be in an array first
-
-
-        // adding functionality to the buttons
-        back.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent actionEvent) {
-                mainFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-                mainFrame.dispose();
-                entryWindow();
-            }
-        });
-
-        add.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent actionEvent) {
-                mainFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-                mainFrame.dispose();
-                addWindow();
-            }
-        });
-
-        edit.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent actionEvent) {
-                try {
-                    editContactWindow(info.getIndex());
-                    mainFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-                    mainFrame.dispose();
-                }catch (IndexOutOfBoundsException iobe){
-                    MessageWindow err = new MessageWindow("Error: No contacts", "Error: cannot edit when there are no contacts in list", 400, 200);
-                    err.setUp();
-                    err.display();
-
-                }
-            }
-        });
-
-        remove.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent actionEvent) {
-                contacts.remove(info.getIndex());
-                ContactRuntime.setContactManager(new ContactManager(contacts));
-                mainFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-                mainFrame.dispose();
-                editWindow();
-                ContactRuntime.save();
-            }
-        });
-
-        control.add(back);
-        control.add(add);
-        control.add(edit);
-        control.add(remove);
-
-        mainFrame.add(info);
-        mainFrame.add(control);
         mainFrame.setVisible(true);
 
     }
@@ -230,7 +270,7 @@ public class WindowManager {
             public void actionPerformed(ActionEvent actionEvent) {
                 mainFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
                 mainFrame.dispose();
-                editWindow();
+                groupWindow(ContactRuntime.getIndex());
             }
         });
 
@@ -239,13 +279,13 @@ public class WindowManager {
             public void actionPerformed(ActionEvent actionEvent) {
                 mainFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
                 mainFrame.dispose();
-                ArrayList<Contact> contacts = ContactRuntime.getContactManager().getContacts();
+                ArrayList<Contact> contacts = ContactRuntime.getContactGroupManager().getGroups().get(ContactRuntime.getIndex()).getManager().getContacts();
 
                 // get text information
                 String name = nameField.getText(), phoneNumber = phoneNumberField.getText(), email = emailField.getText(), extra = extraArea.getText();
                 contacts.add(new Contact(name, phoneNumber, email, extra));
-                ContactRuntime.setContactManager(new ContactManager(contacts));
-                editWindow();
+                ContactRuntime.getContactGroupManager().getGroups().get(ContactRuntime.getIndex()).setManager(new ContactManager(contacts));
+                groupWindow(ContactRuntime.getIndex());
                 ContactRuntime.save();
             }
         });
@@ -270,7 +310,7 @@ public class WindowManager {
      * @param i the index of the contact that we are editing in the ContactManager
      */
     public static void editContactWindow(int i){
-        ArrayList<Contact> contacts = ContactRuntime.getContactManager().getContacts();
+        ArrayList<Contact> contacts = ContactRuntime.getContactGroupManager().getGroups().get(ContactRuntime.getIndex()).getManager().getContacts();
         Contact target = contacts.get(i);
         JFrame mainFrame = commonFrame(PROGRAM_TITLE);
         mainFrame.setLayout(new GridLayout(2,1));
@@ -291,7 +331,7 @@ public class WindowManager {
             public void actionPerformed(ActionEvent actionEvent) {
                 mainFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
                 mainFrame.dispose();
-                editWindow();
+                groupWindow(ContactRuntime.getIndex());
             }
         });
 
@@ -305,8 +345,8 @@ public class WindowManager {
                 // get text information
                 String name = nameField.getText(), phoneNumber = phoneNumberField.getText(), email = emailField.getText(), extra = extraArea.getText();
                 contacts.set(i, new Contact(name, phoneNumber, email, extra));
-                ContactRuntime.setContactManager(new ContactManager(contacts));
-                editWindow();
+                ContactRuntime.getContactGroupManager().getGroups().get(ContactRuntime.getIndex()).setManager(new ContactManager(contacts));
+                groupWindow(ContactRuntime.getIndex());
                 ContactRuntime.save();
             }
         });
@@ -347,7 +387,7 @@ public class WindowManager {
      */
     private static JPanelIndexKeeper createListPanel(){
         JPanelIndexKeeper out = new JPanelIndexKeeper(0);
-        ArrayList<Contact> contacts = ContactRuntime.getContactManager().getContacts();
+        ArrayList<Contact> contacts = ContactRuntime.getContactGroupManager().getGroups().get(ContactRuntime.getIndex()).getManager().getContacts();
         JComponent output;                                                                  // will be used for JList or JLabel depending on if there are contacts or not, both JLabel and JList are children of JComponent
         int [] nameSelectedIndex = {0};
 
@@ -384,3 +424,5 @@ public class WindowManager {
 }
 
 /*TODO: new features ContactGroup and different save files*/
+
+ // TODO: remove when finished
