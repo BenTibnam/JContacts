@@ -11,7 +11,7 @@ import java.util.ArrayList;
  * as the program contains no data which is important enough
  */
 public class WindowManager {
-    private final static String PROGRAM_TITLE = "Contacts v2.0.1";
+    private final static String PROGRAM_TITLE = "Contacts v2.0.2";
 
     /**
      * creates the first window of the program, allowing the user to edit or view the contact list
@@ -223,6 +223,7 @@ public class WindowManager {
             public void actionPerformed(ActionEvent actionEvent) {
                 mainFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
                 mainFrame.dispose();
+                ContactRuntime.getContactGroupManager().getGroups().get(ContactRuntime.getIndex()).setName(groupName.getText());
                 ContactRuntime.save();
                 entryWindow();
             }
@@ -272,12 +273,43 @@ public class WindowManager {
         remove.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
-                contacts.remove(info.getIndex());
-                ContactRuntime.getContactGroupManager().getGroups().get(ContactRuntime.getIndex()).setManager(new ContactManager(contacts));
-                mainFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-                mainFrame.dispose();
-                groupWindow(ContactRuntime.getIndex());
-                ContactRuntime.save();
+
+                JFrame confirmBox = commonFrame("Delete Contact?");
+                JPanel warningPane = new JPanel();
+                JPanel actionPane = new JPanel();
+                JLabel warning = new JLabel("<html><body><h4>Warning:<br/> You are about to delete contact \"" + contacts.get(info.getIndex()).getName() + "\". <br/>Are you sure you want to do this </h4> </body></html>");
+                JButton cancel = new JButton("Cancel");
+                JButton confirm = new JButton("Confirm");
+
+                cancel.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent actionEvent) {
+                        mainFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                        mainFrame.dispose();
+                        groupWindow(ContactRuntime.getIndex());
+                    }
+                });
+
+                confirm.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent actionEvent) {
+                        contacts.remove(info.getIndex());
+                        ContactRuntime.getContactGroupManager().getGroups().get(ContactRuntime.getIndex()).setManager(new ContactManager(contacts));
+                        mainFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                        mainFrame.dispose();
+                        groupWindow(ContactRuntime.getIndex());
+                        ContactRuntime.save();
+                    }
+                });
+
+                warningPane.add(warning);
+                actionPane.add(cancel);
+                actionPane.add(confirm);
+
+                confirmBox.add(warningPane);
+                confirmBox.add(actionPane);
+
+                confirmBox.setVisible(true);
             }
         });
 
@@ -326,7 +358,7 @@ public class WindowManager {
         mainFrame.add(actionPane);
 
         if(ContactRuntime.getContactGroupManager().isShowOnStart()){
-            JLabel message = new JLabel("Uncheck to remove show on start: ");
+            JLabel message = new JLabel("Uncheck to be able to go back ");
             JPanel checkboxPane = new JPanel();
             JCheckBox[] showOnStart = {new JCheckBox()};
             showOnStart[0].setSelected(ContactRuntime.getContactGroupManager().isShowOnStart());
