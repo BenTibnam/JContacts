@@ -11,7 +11,7 @@ import java.util.ArrayList;
  * as the program contains no data which is important enough
  */
 public class WindowManager {
-    private final static String PROGRAM_TITLE = "Contacts v2.0.2";
+    private final static String PROGRAM_TITLE = "Contacts v2.0.3";
 
     /**
      * creates the first window of the program, allowing the user to edit or view the contact list
@@ -43,6 +43,7 @@ public class WindowManager {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
                 index[0] = groupList.getSelectedIndex();
+                ContactRuntime.getContactGroupManager().setIndexOfStart(index[0]);
             }
         });
 
@@ -56,8 +57,6 @@ public class WindowManager {
                 }else{
                     ContactRuntime.getContactGroupManager().setShowOnStart(false);
                 }
-
-                System.out.println(ContactRuntime.getContactGroupManager().isShowOnStart());
 
                 ContactRuntime.save();
             }
@@ -245,12 +244,13 @@ public class WindowManager {
 
     public static void groupWindow(int i){
         // creating widgets
+        ArrayList<Contact> contacts = ContactRuntime.getContactGroupManager().getGroups().get(i).getManager().getContacts();
         JFrame mainFrame = commonFrame(PROGRAM_TITLE);
         mainFrame.setSize(500, 400);
         mainFrame.setLocationRelativeTo(null);
         mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         JPanel titlePane = new JPanel();
-        JPanelIndexKeeper info = createListPanel();
+        JPanelIndexKeeper info = createListPanel(contacts);
         JPanel actionPane = new JPanel();
         JLabel groupLabel = new JLabel("Group: " + ContactRuntime.getContactGroupManager().getGroups().get(i).getName());
         JButton back = new JButton("Back");
@@ -258,8 +258,6 @@ public class WindowManager {
         JButton view = new JButton("View");
         JButton edit = new JButton("Edit");
         JButton add = new JButton("Add");
-        ArrayList<Contact> contacts = ContactRuntime.getContactGroupManager().getGroups().get(i).getManager().getContacts();
-
 
         back.addActionListener(new ActionListener() {
             @Override
@@ -567,9 +565,9 @@ public class WindowManager {
      * creates a JPanel which contains a JList of the contacts
      * @return the completed JPanelIndex keeper
      */
-    private static JPanelIndexKeeper createListPanel(){
+    private static JPanelIndexKeeper createListPanel(ArrayList<Contact> c){
         JPanelIndexKeeper out = new JPanelIndexKeeper(0);
-        ArrayList<Contact> contacts = ContactRuntime.getContactGroupManager().getGroups().get(ContactRuntime.getIndex()).getManager().getContacts();
+        ArrayList<Contact> contacts = c;
         JComponent output;                                                                  // will be used for JList or JLabel depending on if there are contacts or not, both JLabel and JList are children of JComponent
         int [] nameSelectedIndex = {0};
 
